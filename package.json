@@ -16,5 +16,8 @@
   },
   "scripts": {
     "wdio": "wdio run ./wdio.conf.ts"
+  },
+  "dependencies": {
+    "cucumber": "^6.0.7"
   }
 }
