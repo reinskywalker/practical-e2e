@@ -13,23 +13,41 @@ import logger from "./logger"
  * 1. Add more param of allure reporter like add issue (to add an JIRA issue..etc)
  */
 function addStep(testid: string, loglevel: string, msg: string, toAllure = true, issueid = undefined) {
-    let arr = ["info", "debug", "warn", "error"]
-    if (!testid) throw Error(`Invalid testid: ${testid} field to report step`)
-    if (!msg) logger.error(`Given message: ${msg} is not valid to report`)
-    if (!arr.includes(loglevel)) logger.error(`Given loglevel: ${loglevel} is invalid and should be one of these values: ${arr}`)
+    if (!testid || !msg) throw Error('Invalid testid or msg field to report step');
+
+    const arr = ["info", "debug", "warn", "error"];
+    if (!arr.includes(loglevel)) {
+        logger.error(`Given loglevel: ${loglevel} is invalid and should be one of these values: ${arr}`);
+        return;
+    }
+    
+    let logFunction;
+    switch (loglevel) {
+      case 'info':
+        logFunction = logger.info;
+        break;
+      case 'debug':
+        logFunction = logger.debug;
+        break;
+      case 'warn':
+        logFunction = logger.warn;
+        break;
+      case 'error':
+        logFunction = logger.error;
+        allure.addStep(msg, {}, 'failed'); // Substep to fail if error
+        break;
+      default:
+        throw Error('Unknown loglevel');
+    }
+
     try {
-        if (loglevel === "info") logger.info(`[${testid}]: ${msg}`)
-        if (loglevel === "debug") logger.debug(`[${testid}]: ${msg}`)
-        if (loglevel === "warn") logger.warn(`[${testid}]: ${msg}`)
-        if (loglevel === "error") {
-            logger.error(`[${testid}]: ${msg}`)
-            allure.addStep(msg, {}, "failed") // Substep to fail if error
-        } else {
-            if (toAllure) allure.addStep(msg)
-        }
-        if (issueid) allure.addIssue(issueid)
+        logFunction(`[${testid}]: ${msg}`);
+        
+        if (toAllure) allure.addStep(msg);
+        if (issueid) allure.addIssue(issueid);
     } catch (err) {
-        throw Error(`Error reporting reporter step, ${err}`)
+        throw Error(`Error reporting reporter step, ${err}`);
     }
 }
+
 export default { addStep }
